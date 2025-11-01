@@ -19,14 +19,14 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies (minimal)
+    - name: Install system dependencies
       run: |
         sudo apt update
         sudo apt install -y \
           git \
           zip \
           unzip \
-          openjdk-17-jdk \
+          openjdk-11-jdk \          # ← CHANGED TO JDK 11
           python3-pip \
           autoconf \
           libtool \
@@ -39,12 +39,23 @@ jobs:
           libssl-dev \
           libtinfo-dev
 
+    - name: Set JAVA_HOME
+      run: |
+        echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $GITHUB_ENV
+
     - name: Install Cython and Buildozer
       run: |
         pip3 install --user "Cython==0.29.33" "buildozer==1.5.0"
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Build APK (let Buildozer auto-install SDK/NDK)
+    - name: Accept Android SDK licenses (critical!)
+      run: |
+        mkdir -p /home/runner/.android
+        echo "y" | sudo /usr/lib/jvm/java-11-openjdk-amd64/bin/java -jar \
+          /home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses \
+          --sdk_root=/home/runner/.buildozer/android/platform/android-sdk
+
+    - name: Build APK
       run: |
         buildozer -v android debug
         ls -l bin/
