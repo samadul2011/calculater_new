@@ -3,13 +3,12 @@ name: Build APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-apk:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
 
     steps:
     - name: Checkout code
@@ -20,7 +19,7 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies
+    - name: Install system dependencies (minimal)
       run: |
         sudo apt update
         sudo apt install -y \
@@ -45,12 +44,12 @@ jobs:
         pip3 install --user "Cython==0.29.33" "buildozer==1.5.0"
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Build APK
+    - name: Build APK (let Buildozer auto-install SDK/NDK)
       run: |
         buildozer -v android debug
         ls -l bin/
 
-    - name: Upload APK as artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: calculator-apk
