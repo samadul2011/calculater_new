@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-22.04  # Explicitly use 22.04 for stability
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -20,7 +20,7 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies (Ubuntu 22.04+ compatible)
+    - name: Install system dependencies
       run: |
         sudo apt update
         sudo apt install -y \
@@ -38,11 +38,11 @@ jobs:
           cmake \
           libffi-dev \
           libssl-dev \
-          libtinfo-dev  # This provides libtinfo6, which is sufficient
+          libtinfo-dev
 
-    - name: Install Buildozer
+    - name: Install Cython and Buildozer
       run: |
-        pip3 install --user "buildozer==1.5.0"  # Pin to stable version
+        pip3 install --user "Cython==0.29.33" "buildozer==1.5.0"
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Build APK
