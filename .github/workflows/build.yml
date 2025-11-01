@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Explicitly use 22.04 for stability
 
     steps:
     - name: Checkout code
@@ -20,21 +20,30 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies
+    - name: Install system dependencies (Ubuntu 22.04+ compatible)
       run: |
         sudo apt update
-        sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+        sudo apt install -y \
+          git \
+          zip \
+          unzip \
+          openjdk-17-jdk \
+          python3-pip \
+          autoconf \
+          libtool \
+          pkg-config \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          cmake \
+          libffi-dev \
+          libssl-dev \
+          libtinfo-dev  # This provides libtinfo6, which is sufficient
 
     - name: Install Buildozer
       run: |
-        pip3 install --user buildozer
+        pip3 install --user "buildozer==1.5.0"  # Pin to stable version
         echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Initialize Buildozer
-      run: buildozer init
-
-    - name: Overwrite buildozer.spec (optional if you already have it)
-      run: echo "Using existing buildozer.spec"
 
     - name: Build APK
       run: |
