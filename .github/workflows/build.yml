@@ -2,83 +2,47 @@ name: Build APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-apk:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-      
+      uses: actions/checkout@v4
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
-        
+        python-version: '3.10'
+
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          python3-dev \
-          python3-pip \
-          libssl-dev \
-          libffi-dev \
-          libjpeg-dev \
-          zlib1g-dev \
-          libfreetype6-dev \
-          liblcms2-dev \
-          libwebp-dev \
-          tcl8.6-dev \
-          tk8.6-dev \
-          python3-tk \
-          libharfbuzz-dev \
-          libfribidi-dev \
-          libxcb1-dev
-        
-    - name: Install Python dependencies
+        sudo apt update
+        sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+
+    - name: Install Buildozer
       run: |
-        python -m pip install --upgrade pip
-        pip install buildozer
-        
-    - name: Cache buildozer
-      uses: actions/cache@v3
+        pip3 install --user buildozer
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Initialize Buildozer
+      run: buildozer init
+
+    - name: Overwrite buildozer.spec (optional if you already have it)
+      run: echo "Using existing buildozer.spec"
+
+    - name: Build APK
+      run: |
+        buildozer -v android debug
+        ls -l bin/
+
+    - name: Upload APK as artifact
+      uses: actions/upload-artifact@v4
       with:
-        path: |
-          ~/.buildozer
-          ~/.local/share/buildozer
-        key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-        restore-keys: |
-          ${{ runner.os }}-buildozer-
-          
-    - name: Create icon file
-      run: |
-        # Create a simple icon using ImageMagick if available
-        if command -v convert >/dev/null 2>&1; then
-          convert -size 512x512 xc:lightblue -pointsize 200 -gravity center -annotate +0+0 'C' icon.png
-        else
-          # Create a simple icon file using base64 if ImageMagick is not available
-          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" | base64 -d > icon.png
-        fi
-        
-    - name: Build APK with Buildozer
-      run: |
-        buildozer android debug
-        
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v3
-      if: success()
-      with:
-        name: calculator-debug.apk
+        name: calculator-apk
         path: bin/*.apk
-        
-    - name: Upload build logs
-      uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: buildozer-logs
-        path: .buildozer/logs/
